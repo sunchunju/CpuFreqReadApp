@@ -6,14 +6,12 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModelProvider;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,6 +24,7 @@ public class CpuFreqService extends Service {
     private static final String CHANNEL_ID = "CpuFreqServiceChannel";
     private Handler handler;
     private Runnable runnable;
+    private int freshTime;
 
     @Nullable
     @Override
@@ -43,18 +42,21 @@ public class CpuFreqService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        freshTime = intent.getIntExtra("fresh_time",1000); // 获取数据
+
         startForeground(1, createNotification()); // 启动前台服务
-        startLogging(); // 开始记录 CPU 频率
+        startLogging(freshTime); // 开始记录 CPU 频率
         return START_STICKY;
     }
 
-    private void startLogging() {
+    private void startLogging(int freshTime) {
         handler = new Handler(Looper.getMainLooper());
         runnable = new Runnable() {
             @Override
             public void run() {
                 readCpuFreq();
-                handler.postDelayed(this, 1000); // 每秒执行一次
+                handler.postDelayed(this, freshTime); // 每秒执行一次
             }
         };
         handler.post(runnable);
@@ -84,8 +86,6 @@ public class CpuFreqService extends Service {
     private void readCpuFreq() {
         String cpufreqDirPath = "/sys/devices/system/cpu/cpufreq/";
         File cpufreqDir = new File(cpufreqDirPath);
-//        viewModel.cpuFrequencies.postValue("");
-//        viewModel.setCpuFrequencies("");
 
         // 获取所有policy目录
         String[] policies = cpufreqDir.list((dir, name) -> name.startsWith("policy"));

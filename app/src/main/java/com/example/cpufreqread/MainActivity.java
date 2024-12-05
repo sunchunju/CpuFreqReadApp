@@ -31,6 +31,7 @@ import com.example.cpufreqread.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "CpuFreqLogger";
     private TextView cpuFreqTextView;
     private Button startStopButton;
+    private EditText freshTimeEditView;
     private boolean isLogging = false;
     private Handler handler;
     private Runnable runnable;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         cpuFreqTextView = findViewById(R.id.cpuFreqTextView);
         startStopButton = findViewById(R.id.startBtn);
+        freshTimeEditView = findViewById(R.id.refTimeValueEt);
         startStopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,6 +102,9 @@ public class MainActivity extends AppCompatActivity {
         startStopButton.setText("Stop");
 
         Intent serviceIntent = new Intent(this, CpuFreqService.class);
+        //set fresh time
+        String freshTimeValue = freshTimeEditView.getText().toString();
+        serviceIntent.putExtra("fresh_time",Integer.parseInt(freshTimeValue.isEmpty()?"1000":freshTimeValue));
         startForegroundService(serviceIntent); // 启动前台服务
 
         readCpuFreqAndUpdateUI();
