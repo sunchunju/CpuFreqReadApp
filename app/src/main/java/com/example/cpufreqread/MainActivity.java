@@ -2,45 +2,31 @@ package com.example.cpufreqread;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 
 import androidx.core.app.ActivityCompat;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
 import com.example.cpufreqread.databinding.ActivityMainBinding;
+import com.lzf.easyfloat.EasyFloat;
+import com.lzf.easyfloat.enums.ShowPattern;
+import com.lzf.easyfloat.enums.SidePattern;
+import com.lzf.easyfloat.interfaces.OnInvokeView;
 
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView cpuFreqTextView;
     private Button startStopButton;
     private EditText freshTimeEditView;
+    private TextView cpuFreqFloatTextView;
     private boolean isLogging = false;
     private Handler handler;
     private Runnable runnable;
@@ -70,8 +57,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (isLogging) {
                     stopLogging();
+                    dismissPopupWindow();
                 } else {
                     startLogging();
+                    showPopupWindow();
+                    readCpuFreqAndUpdateUI();
                 }
             }
         });
@@ -80,6 +70,29 @@ public class MainActivity extends AppCompatActivity {
         deleteTempFile();
         checkPermission();
     }
+
+    private void dismissPopupWindow() {
+        EasyFloat.dismiss();
+    }
+
+    private void showPopupWindow() {
+        EasyFloat.with(getApplicationContext())
+                .setShowPattern(ShowPattern.ALL_TIME)
+                .setSidePattern(SidePattern.RESULT_SIDE)
+                .setImmersionStatusBar(true)
+                .setGravity(Gravity.END, -20,10)
+                .setDragEnable(true)
+                .setLayout(R.layout.float_app, new OnInvokeView() {
+                    @Override
+                    public void invoke(View view) {
+                        cpuFreqFloatTextView = view.findViewById(R.id.tvCpuFreqValue);
+                    }
+                })
+                .show();
+
+
+    }
+
     private void deleteTempFile() {
         File path = getFilesDir();
         File file = new File(path, "cpu_frequency.txt");
@@ -106,8 +119,6 @@ public class MainActivity extends AppCompatActivity {
         String freshTimeValue = freshTimeEditView.getText().toString();
         serviceIntent.putExtra("fresh_time",Integer.parseInt(freshTimeValue.isEmpty()?"1000":freshTimeValue));
         startForegroundService(serviceIntent); // 启动前台服务
-
-        readCpuFreqAndUpdateUI();
     }
 
     private void readCpuFreqAndUpdateUI() {
@@ -133,11 +144,12 @@ public class MainActivity extends AppCompatActivity {
     private void checkPermission() {
         boolean need = ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
                 ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) ||
-                ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.POST_NOTIFICATIONS);
+                ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.POST_NOTIFICATIONS) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.SYSTEM_ALERT_WINDOW) ;
         Log.i("MainActivity","checkPermission need = "+need);
         if(need) {
             ActivityCompat.requestPermissions(this, new
-                    String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.POST_NOTIFICATIONS}, 0);
+                    String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.SYSTEM_ALERT_WINDOW}, 0);
         }
     }
 
@@ -145,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
         String cpufreqDirPath = "/sys/devices/system/cpu/cpufreq/";
         File cpufreqDir = new File(cpufreqDirPath);
         cpuFreqTextView.setText("");
+        cpuFreqFloatTextView.setText("");
 
         // 获取所有policy目录
         String[] policies = cpufreqDir.list((dir, name) -> name.startsWith("policy"));
@@ -157,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Update UI
                 cpuFreqTextView.append(policy+": "+scalingCurFreqValue+"\n");
+                cpuFreqFloatTextView.append(policy+": "+scalingCurFreqValue+"\n");
             }
         } else {
             System.out.println("No policy directories found.");
