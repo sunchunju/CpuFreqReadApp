@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isLogging = false;
     private Handler handler;
     private Runnable runnable;
+    private Button aa;
 
 
 
