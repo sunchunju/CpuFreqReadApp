@@ -65,9 +65,10 @@
         app:layout_constraintTop_toBottomOf="@+id/startBtn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:text=" 1，app首次启动手动赋予notification权限\n
+        android:text=" 1，app首次启动手动赋予全部权限\n
 2，点start按钮即可开始读取操作，forground service形式运行\n
 3，点stop按钮即可结束\n
-4，数据存储在/data/user/0/com.example.cpufreqread/files/cpu_frequency.txt中\n
-5，每次重启应用会清除cpu_frequency.txt数据"/>
+4，数据存储在/data/user/0/com.example.cpufreqread/files/cpu_frequency.csv中\n
+5，每次重启应用会清除cpu_frequency.csv数据\n
+6，读取的是/sys/devices/system/cpu/cpufreq $ cat policy*/scaling_cur_freq"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

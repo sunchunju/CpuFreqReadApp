@@ -88,19 +88,46 @@ public class CpuFreqService extends Service {
         String cpufreqDirPath = "/sys/devices/system/cpu/cpufreq/";
         File cpufreqDir = new File(cpufreqDirPath);
 
+        File csvFilePath  = getFilesDir();
+        File csvFile  = new File(csvFilePath, "cpu_frequency.csv");
+
         // 获取所有policy目录
         String[] policies = cpufreqDir.list((dir, name) -> name.startsWith("policy"));
         if (policies != null) {
+            StringBuilder csvBuilder = new StringBuilder();
+
+            // 检查CSV文件是否存在并且是否包含列名
+            boolean isFirstWrite = !csvFile.exists() || csvFile.length() == 0;
+            // 添加列名
+            if (isFirstWrite) {
+                for (String policy : policies) {
+                    csvBuilder.append(policy).append(",");
+                }
+                // 移除最后一个逗号并换行
+                csvBuilder.setLength(csvBuilder.length() - 1);
+                csvBuilder.append("\n");
+            }
+
+            // 添加值
+            StringBuilder valuesBuilder = new StringBuilder();
             for (String policy : policies) {
                 String scalingCurFreqPath = cpufreqDirPath + policy + "/scaling_cur_freq";
                 String scalingCurFreqValue = readScalingCurFreq(scalingCurFreqPath);
                 Log.i(TAG,"policy "+policy+", scaling_cur_freq: "+scalingCurFreqValue);
                 System.out.println(policy + ": " + scalingCurFreqValue);
 
-                // 将数据写入文件
-                writeToFile(policy+":"+scalingCurFreqValue);
-
+                // 添加当前频率值
+                valuesBuilder.append(scalingCurFreqValue).append(",");
             }
+            // 移除最后一个逗号
+            valuesBuilder.setLength(valuesBuilder.length() - 1);
+            valuesBuilder.append("\n");
+
+            // 将数据写入CSV文件
+            if (isFirstWrite) {
+                writeToFile(csvBuilder.toString(), true); // 写入列名
+            }
+            writeToFile(valuesBuilder.toString(), false); // 追加值
         } else {
             System.out.println("No policy directories found.");
         }
@@ -118,24 +145,21 @@ public class CpuFreqService extends Service {
             e.printStackTrace();
             return "Error reading file";
         }
-
         return freqValue.toString();
     }
 
-    private void writeToFile(String data) {
+    private void writeToFile(String data, boolean isHeader) {
         try {
-//            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
             File path = getFilesDir();
-            File file = new File(path, "cpu_frequency.txt");
+            File file = new File(path, "cpu_frequency.csv");
 
             if (!path.exists()) {
                 path.mkdirs(); // 创建目录
             }
-            FileWriter writer = new FileWriter(file, true); // 以追加模式写入
-            writer.append(data).append("\n"); // 每次写入后添加一个换行符
+            FileWriter writer = new FileWriter(file, !isHeader); // 根据标志选择模式
+            writer.write(data);
             writer.close();
             Log.d(TAG, "Data written to file: " + data);
-
         } catch (IOException e) {
             Log.e(TAG, "Error writing data to file", e);
         }

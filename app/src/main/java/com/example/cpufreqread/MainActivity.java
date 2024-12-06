@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void deleteTempFile() {
         File path = getFilesDir();
-        File file = new File(path, "cpu_frequency.txt");
+        File file = new File(path, "cpu_frequency.csv");
         // 检查文件是否存在
         if (file.exists()) {
             // 尝试删除文件
