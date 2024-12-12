@@ -4,20 +4,26 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class CpuFreqService extends Service {
     private static final String TAG = "CpuFreqService";
@@ -88,7 +94,7 @@ public class CpuFreqService extends Service {
         String cpufreqDirPath = "/sys/devices/system/cpu/cpufreq/";
         File cpufreqDir = new File(cpufreqDirPath);
 
-        File csvFilePath  = getFilesDir();
+        File csvFilePath  = getExternalCacheDir();
         File csvFile  = new File(csvFilePath, "cpu_frequency.csv");
 
         // 获取所有policy目录
@@ -150,7 +156,20 @@ public class CpuFreqService extends Service {
 
     private void writeToFile(String data, boolean isHeader) {
         try {
-            File path = getFilesDir();
+            /*
+             * getFilesDir()
+             * 返回的是应用的内部存储目录路径，这个目录用于存储应用的私有文件，只有该应用可以访问这些文件。
+             * 返回的路径通常位于 /data/data/<package_name>/files 目录下。
+             * */
+//            File path = getFilesDir();
+
+            /*
+             * getExternalCacheDir()
+             * 返回的是应用的外部缓存目录路径，这个目录用于存储应用的临时文件，比如缓存数据或其他可以被清除的文件。
+             * 该目录是外部存储的一部分，其他应用和用户可以访问这个目录。用户可以通过文件管理器查看和删除这个目录中的文件。
+             * 返回的路径通常位于 /storage/emulated/0/Android/data/<package_name>/cache 目录下
+             * */
+            File path = getExternalCacheDir(); //
             File file = new File(path, "cpu_frequency.csv");
 
             if (!path.exists()) {
@@ -163,6 +182,20 @@ public class CpuFreqService extends Service {
         } catch (IOException e) {
             Log.e(TAG, "Error writing data to file", e);
         }
+
+//        ContentValues values = new ContentValues();
+//        values.put(MediaStore.Downloads.DISPLAY_NAME, "cpu_frequency.csv");
+//        values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+//        values.put(MediaStore.Downloads.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS);
+//
+//        Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+//        try {
+//            OutputStream outputStream = getContentResolver().openOutputStream(uri);
+//            outputStream.write();
+//        } catch (FileNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
+
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
@@ -94,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteTempFile() {
-        File path = getFilesDir();
+//        File path = getFilesDir();
+        File path = getExternalCacheDir();
         File file = new File(path, "cpu_frequency.csv");
         // 检查文件是否存在
         if (file.exists()) {
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         boolean need = ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
                 ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) ||
                 ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.POST_NOTIFICATIONS) ||
-                ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.SYSTEM_ALERT_WINDOW) ;
+                ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.SYSTEM_ALERT_WINDOW);
         Log.i("MainActivity","checkPermission need = "+need);
         if(need) {
             ActivityCompat.requestPermissions(this, new
